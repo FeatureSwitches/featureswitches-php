@@ -11,7 +11,7 @@ use \GuzzleHttp\Exception\ServerException;
  * API client for FeatureSwitches.com
  */
 class FSClient {
-    const VERSION = '0.8.0';
+    const VERSION = '0.8.1';
 
     protected $_customerKey;
     protected $_environmentKey;
@@ -55,6 +55,18 @@ class FSClient {
         $result = $this->_apiRequest($endpoint);
 
         return $result['success'];
+    }
+
+    public function sync() {
+        $endpoint = 'features';
+        $result = $this->_apiRequest($endpoint);
+
+        if ($result['success'] == true) {
+            $features = $result['data']['features'];
+            foreach ($features as &$feature) {
+                $this->_cache->set($feature['feature_key'], $feature, $this->_cacheTimeout);
+            }
+        }
     }
 
     public function isEnabled($featureKey, $userIdentifier = '', $default=false) {
