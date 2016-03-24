@@ -21,6 +21,9 @@ $featureswitches = new FeatureSwitches\FSClient('customer_api_key', 'environment
 // Ensure that the API credentials are valid
 $result = $featureswitches->authenticate();  # result will be true/false to indicate success
 
+// Sync feature state
+$featureswitches->sync();
+
 // Add a user
 $result = $featureswitches->addUser('user_identifier', 'optional_customer_identifier', 'optional_name', 'optional_email');
 
