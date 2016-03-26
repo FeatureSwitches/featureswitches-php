@@ -161,7 +161,7 @@ class FSClient {
                     $paramType => $params,
                     'headers' => array(
                         'Authorization' => $this->_auth,
-                        'User-Agent' => 'FeatureSwitches-PHP/' . $this->VERSION
+                        'User-Agent' => 'FeatureSwitches-PHP/' . self::VERSION
                     )
                 )
             );
