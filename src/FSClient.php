@@ -72,7 +72,7 @@ class FSClient {
         }
     }
 
-    public function isEnabled($featureKey, $userIdentifier = '', $default=false) {
+    public function isEnabled($featureKey, $userIdentifier = null, $default=false) {
         $feature = $this->_cache->get($featureKey);
 
         if (is_null($feature)) {
@@ -83,7 +83,26 @@ class FSClient {
             }
         }
 
-        return $this->_enabledForUser($feature, $userIdentifier);
+        $result = $this->_enabledForUser($feature, $userIdentifier);
+
+        if ($result == false && $feature['enabled'] == true && $feature['rollout_progress'] < $feature['rollout_target']) {
+            $endpoint = 'feature/enabled';
+            $params = array(
+                'feature_key' => $featureKey,
+                'user_identifier' => $userIdentifier
+            );
+
+            $res = $this->_apiRequest($endpoint, $params);
+            if ($res['success'] == true && $res['data']['enabled'] == true) {
+                if ($this->_cacheTimeout > 0) {
+                    array_push($feature['include_users'], $userIdentifier);
+                    $this->_cache->set($featureKey, $feature, $this->_cacheTimeout);
+                }
+                return true;
+            }
+        }
+
+        return $result;
     }
 
     public function addUser($userIdentifier, $customerIdentifier = '', $name = '', $email = '') {
@@ -124,7 +143,7 @@ class FSClient {
     }
 
     protected function _enabledForUser($feature, $userIdentifier) {
-        if ($feature['enabled'] && isset($userIdentifier)) {
+        if ($feature['enabled'] && !is_null($userIdentifier)) {
             if (count($feature['include_users']) > 0) {
                 if (in_array($userIdentifier, $feature['include_users'])) {
                     return true;
@@ -137,8 +156,10 @@ class FSClient {
                 } else { 
                     return true;
                 }
+            } else if ($feature['rollout_target'] > 0) {
+                return false;
             }
-        } else if (!isset($userIdentifier) && (count($feature['include_users']) > 0 || count($feature['exclude_users']) > 0)) {
+        } else if (is_null($userIdentifier) && ($feature['rollout_target'] > 0 || count($feature['include_users']) > 0 || count($feature['exclude_users']) > 0)) {
             return false;
         }
 
