@@ -86,20 +86,14 @@ class FSClient {
         $result = $this->_enabledForUser($feature, $userIdentifier);
 
         if ($result == false && $feature['enabled'] == true && $feature['rollout_progress'] < $feature['rollout_target']) {
-            $endpoint = 'feature/enabled';
-            $params = array(
-                'feature_key' => $featureKey,
-                'user_identifier' => $userIdentifier
-            );
+            $enabled = $this->_getFeatureEnabled($featureKey, $userIdentifier);
 
-            $res = $this->_apiRequest($endpoint, $params);
-            if ($res['success'] == true && $res['data']['enabled'] == true) {
-                if ($this->_cacheTimeout > 0) {
-                    array_push($feature['include_users'], $userIdentifier);
-                    $this->_cache->set($featureKey, $feature, $this->_cacheTimeout);
-                }
-                return true;
+            if ($enabled == true && $this->_cacheTimeout > 0) {
+                array_push($feature['include_users'], $userIdentifier);
+                $this->_cache->set($featureKey, $feature, $this->_cacheTimeout);
             }
+
+            return $enabled;
         }
 
         return $result;
@@ -140,6 +134,20 @@ class FSClient {
         } else {
             return null;
         }
+    }
+
+    protected function _getFeatureEnabled($featureKey, $userIdentifier) {
+        $endpoint = 'feature/enabled';
+        $params = array(
+            'feature_key' => $featureKey,
+            'user_identifier' => $userIdentifier
+        );
+
+        $result = $this->_apiRequest($endpoint, $params);
+        if ($result['success'] == true && $result['data']['enabled'] == true) {
+            return true;
+        }
+        return false;
     }
 
     protected function _enabledForUser($feature, $userIdentifier) {
