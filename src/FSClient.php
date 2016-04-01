@@ -11,7 +11,7 @@ use \GuzzleHttp\Exception\ServerException;
  * API client for FeatureSwitches.com
  */
 class FSClient {
-    const VERSION = '0.8.5';
+    const VERSION = '0.8.6';
 
     protected $_customerKey;
     protected $_environmentKey;
